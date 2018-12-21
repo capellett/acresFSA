@@ -1,8 +1,33 @@
 #' United States Farm Service Agency Acreage Data
 #'
-#' Some datasets from the United States Energy Information Administration.
+#' This package contains annual county level data from
+#'     the United States Farm Service Agency.
 #'
 #' @docType package
 #' @name acresFSA
 #'
 NULL
+
+#' acresFSA
+#'
+#' Acreage data from 2009-2018 by County, and a variety of other factors.
+#'
+#' @format A data frame with nine variables:
+#' \describe{
+#' \item{\code{Year}}{Year, 2009-2018}
+#' \item{\code{State}, \code{County}}{US State and county name}
+#' \item{\code{Type}}{Cultivation type: Failed, Not Planted, Planted, Prevented, or Volunteer}
+#' \item{\code{`Irrigation Practice`}}{Irrigated with typical means, other type of irrigation, and total (irrigated and non-irrigated)}
+#' \item{\code{Crop}}{Name of crop}
+#' \item{\code{Variety}}{Name of crop variety}
+#' \item{\code{`Intended Use`}}{Intended use of the crop}
+#' \item{\code{Acres}}{Amount of acres}
+#' }
+#'
+#' For further details, see \url{https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index}
+#'
+"acresFSA"
+
+# farmsFSA
+#
+# Count of farms reporting to the FSA from 2009-2018 by County.

@@ -23,7 +23,7 @@
 #' not.null(c(a=NULL, b=NULL)) ## FALSE
 not.null <- function(x) !is.null(x)
 
-## x %!in% y
+## x %nin% y
 #' @title Not in
 #' @description Binary operator which returns a logical vector indicating
 #'     if there is \emph{not} a match for \code{x} in \code{y}.
@@ -33,7 +33,7 @@ not.null <- function(x) !is.null(x)
 #' @examples
 #' c(1, 2, 3,'a','b','c') %!in% letters
 #' ## TRUE TRUE TRUE FALSE FALSE FALSE
-'%!in%' <- function(x,y) is.na(match(x,y))
+'%nin%' <- function(x,y) is.na(match(x,y))
 
 ## flast(x)
 #' @title Fast last
@@ -87,7 +87,7 @@ to_aoi <- function(x) {
 #'     a table in documentation produced by Roxygen.
 #' @param df A \code{data.frame} object to print in the documentation.
 #' @return A table of sorts.
-#' @example print(tabular(mtcars[1:5, 1:5]))
+# #' @example # print(tabular(mtcars[1:5, 1:5]))
 tabular <- function(df, ...) {
   stopifnot(is.data.frame(df))
 
