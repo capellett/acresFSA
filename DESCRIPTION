@@ -1,7 +1,8 @@
 Package: acresFSA
 Title: United States Farm Service Agency Acreage Data
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
+Author: C A Pellett
+Maintainer: C A Pellett
 Description: The US Farm Service Agency has published annual acreage by county devoted to 
     a variety of agricultural and conservation land uses. The acresFSA package includes
     acreage data from 2009 to 2018 and functions to review that data.
@@ -12,5 +13,6 @@ LazyData: true
 RoxygenNote: 6.1.1
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
