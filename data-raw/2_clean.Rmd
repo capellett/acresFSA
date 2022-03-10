@@ -1,0 +1,396 @@
+---
+title: "Validation of Acreage Data from the US Farm Service Agency"
+author: C Alex Pellett
+date: '`r Sys.Date()`' 
+output: 
+  word_document:
+    number_sections: true
+always_allow_html: true
+---
+
+```{r echo=F, message=F, warning=F}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+library(tidyverse)
+library(magrittr)
+library(readxl)
+```
+
+
+```{r}
+fsa <- readRDS('acresFSA_compilation.rds')
+fsa <- mutate(fsa, `County Name` = toupper(`County Name`))
+
+### TODO: use these libraries.
+### install.packages('validate', 'errorlocate); library(validate); library(errorlocate)
+
+## Convert any values of 'NULL', 'null', 'NA', or 'na' to NA_character_
+unique(nchar(fsa$`State Code`))==2
+unique(nchar(fsa$`County Code`)) == 3
+```
+## Test year values
+```{r}
+unique(fsa$Year) %>% sort()
+```
+
+## Test State Code, State Name, and State Abbreviation values
+```{r}
+fsa %>%
+  dplyr::select(`State Code`, `State Name`, `State Abbrev`) %>%
+  unique() %>%
+  dplyr::arrange(1)
+
+```
+I'm not sure why the state codes appear to skip some numbers (03, for example). But everything else seems correct.
+
+## Test that the State County Code is truly the concatenation of state and county codes.
+```{r}
+filter(fsa, `State County Code` != paste0(`State Code`, `County Code`)) %>%
+  nrow(.) == 0
+
+fsa <- dplyr::select(fsa, -`State Code`, -`State Abbrev`) %>%
+  dplyr::rename(State = 'State Name')
+```
+Since that appears to be correct, the columns for State Code and State Abbreviation are redundant and have been removed.
+
+
+## Test the County Names are uniform
+```{r}
+duped <- function(x) { duplicated(x) | duplicated(x, fromLast=TRUE) }
+
+### Return cases where 1:1 fails
+one_to_one_fails <- function(df, id1, id2) {
+  unique(df[,c(id1, id2)]) %>%
+    .[duped(.[,id1]) | duped(.[,id2]),] }
+```
+
+
+```{r}
+## Test that State+County is 1:1 with 'State County Code'
+# one_to_one_fails(fsa, c('State', 'County Name'), 'State County Code') %>% nrow()
+#### Should be nrow 0, is nrow 835...
+#### Caused by variation in county names
+
+# length(unique(fsa$`State County Code`))
+# filter(fsa, Year==2016)$`State County Code` %>%
+#   unique() %>% length()
+#### Apparently, not all state county codes are in every year...
+
+county_name_recode <-
+  select(fsa, 'State County Code', 'County Name') %>%
+  unique() %>%
+  group_by(`State County Code`) %>%
+  do({
+    county_names <- .$`County Name` %>%
+      str_replace_all("\\.", '') %>%
+      str_replace_all('&#39;', '')
+    county_names <- gsub(",.*","",county_names) %>%
+      unique()
+    tibble(County= county_names[which.max(nchar(county_names))])
+  }) %>% ungroup() %>%
+  dplyr::filter(!is.na(`State County Code`))
+
+fsa <- select(fsa, -`County Name`) %>% inner_join(county_name_recode)
+
+## Test again that 'State'+'County' is 1:1 with 'State County Code'
+# one_to_one_fails(fsa, c('State', 'County'), 'State County Code') %>% nrow() == 0
+#### Then drop State County Code
+fsa <- select(fsa, -`State County Code`)
+fsa <- dplyr::select(fsa, -'County Code')
+```
+There are some instances of counties with changes to the county name over the different years. After removing a few stray punctuation marks, the county names are made uniform by replacing the variations with the version of that county name which has the most characters in it (letters, spaces, and punctation). Once that operation is performed, the State County Code and County Code columns are no longer relevant, so they are dropped.
+
+
+## Test that Crop values are uniform
+```{r}
+
+#### Just like for the State_table and county_name_recode,
+###  create an authoritative reference table for Crops & crop types
+### that will allow dropping code columns.
+
+## Test that Crop Name is 1:1 with Crop Code
+# one_to_one_fails(fsa, 'Crop Name', 'Crop Code') %>% View()
+### Should be 0, is 49.
+
+recode_column_with_table <- function(df, col_index, recode_table) {
+  df2 <- df
+  names(df2)[col_index] <- 'from'
+  print(paste0('recoding ', names(df)[col_index]))
+  df[col_index] <- left_join(df2, recode_table, by='from') %>%
+    mutate(to=if_else(is.na(to), from, to)) %>% .$to
+  invisible(df) }
+
+### Recode crop names.
+table(fsa[c('Crop Name', 'Year')]) %>% write.csv('Crop Names per Year.csv')
+one_to_one_fails(fsa, 'Crop Name', 'Crop Code') %>% write.csv('Crop codes with multiple names.csv')
+
+
+# crop_name_recode <- read_xlsx("data-raw\\FSA - Clean up the names.xlsx", sheet = 'crop name recode')
+# fsa <- recode_column_with_table(fsa, 3, crop_name_recode)
+
+crop_name_recode <- read_xlsx("FSA - Clean up the names.xlsx", sheet = 'crop name recode (2)') %>%
+  dplyr::mutate(`Crop Code` = stringr::str_pad(
+    as.character(`Crop Code`), width=4, side="left", pad="0"))
+
+fsa <- dplyr::bind_rows(
+  dplyr::anti_join(fsa, crop_name_recode, by="Crop Code"),
+  dplyr::semi_join(fsa, crop_name_recode, by="Crop Code") %>%
+    dplyr::select(-`Crop Name`) %>%
+    dplyr::left_join(crop_name_recode, by="Crop Code"))
+
+# one_to_one_fails(fsa, 'Crop Name', 'Crop Code') %>% nrow() == 0 ## TRUE
+
+fsa <- dplyr::select(fsa, -`Crop Code`)
+```
+There are some cases of multiple crop names associated with a single crop code. Those cases have been reviewed and the varying crop names have been replaced with whichever one among them appears most appropriate. Then, the Crop Code column is dropped because it is no longer needed.
+
+
+## Test the Crop Type values are uniform
+```{r}
+# filter(fsa, !is.na(`Crop Type`)) %>%
+#   one_to_one_fails('Crop Type Name', 'Crop Type') %>% View() ## 420 rows.
+
+## Test that Crop Name + Crop Type Name is 1:many with Crop Type
+# fsa[,c('Crop Name', 'Crop Type Name', 'Crop Type')] %>%
+#   filter(!is.na(`Crop Type`)) %>% unique() %>%
+#   .[duped(.[,c('Crop Name', 'Crop Type Name')]),]
+## Should be nrow 0. is nrow 0.
+
+# fsa %>% 
+#   dplyr::select(`Crop Name`, `Crop Type Name`, `Crop Type`) %>% 
+#   unique() %>%
+#   scutils::dupes(idCols="Crop Type") %>% View()
+
+crop_type_name_recode <- fsa %>% 
+  dplyr::select(`Crop Name`, `Crop Type Name`, `Crop Type`) %>% 
+  unique() %>%
+  dplyr::filter(!is.na(`Crop Type`)) %>%
+  scutils::dupes(., idCols=c("Crop Name", "Crop Type")) %>% 
+  dplyr::group_by(`Crop Name`, `Crop Type`) %>%
+  dplyr::summarise(`Crop Type Name` = `Crop Type Name`[which.max(nchar(`Crop Type Name`))]) %>%
+  dplyr::ungroup()
+
+fsa <- dplyr::bind_rows(
+  dplyr::anti_join(fsa, crop_type_name_recode, by=c('Crop Name', 'Crop Type')),
+  dplyr::semi_join(fsa, crop_type_name_recode, by=c('Crop Name', 'Crop Type')) %>%
+    dplyr::select(-`Crop Type Name`) %>%
+    dplyr::left_join(crop_type_name_recode, by=c('Crop Name', 'Crop Type')) )
+
+## test that it worked
+# fsa %>% 
+#   dplyr::select(`Crop Name`, `Crop Type Name`, `Crop Type`) %>% 
+#   unique() %>%
+#   dplyr::filter(!is.na(`Crop Type`)) %>%
+#   scutils::dupes(., idCols=c("Crop Name", "Crop Type"))
+## should be nrow() == 0, and it is.
+
+### Old Code
+# ### Recode Crop Type Names
+# table(fsa_[c('Crop Type Name', 'Year')]) %>% write.csv('data-raw\\Crop Type Names per Year.csv')
+# crop_type_name_recode <- read_xlsx("data-raw\\FSA - Clean up the names.xlsx",
+#                                    sheet='crop type name recode')
+# fsa <- recode_column_with_table(fsa, 4, crop_type_name_recode)
+
+fsa <- dplyr::select(fsa, -`Crop Type`) %>%
+  dplyr::rename(Crop='Crop Name', Variety='Crop Type Name')
+
+track_dataset(fsa, 'Tested and removed redundant columns')
+```
+The Crop Type column contains 3 letter abbreviations of the values in the Crop Type Name column. The Crop Type abbreviations can be repeated for different crops. For example Crop Type of "CAN" might refer to Canary Grass, Carnelian Grapes, Canna Lily Flowers, or several other crops. That seems reasonable, but there are some cases where a single Crop Type abbreviation value is used to refer to multiple Crop Type Name values for the same Crop. In those cases, the Crop Type Name with the most characters is selected, as it is probably the most descriptive. At that point, the Crop Type abbreviation is redundant, so the column is dropped. The" "Crop Type Name" column is renamed to "Variety".
+
+```{r eval=F}
+## This chunk of code is outdated and no longer needed.
+
+
+### Recode crop names and crop type names together ...
+### Make a table with unique crop code, crop name, crop type name, and crop type - by year
+crop_classification_review <- fsa %>%
+  mutate(`Crop Type Name` = if_else(
+    `Crop Type Name`=='NULL', NA_character_, `Crop Type Name`)) %>%
+  group_by(Year, `Crop Code`, `Crop Name`, `Crop Type Name`) %>%
+  summarise(Acres=sum(Acres, na.rm=T)) %>%
+  ungroup() %>%
+  spread('Year', 'Acres')
+
+write.csv(crop_classification_review, 'data-raw\\Crop Classification Review.csv')
+crop_name_and_type_recode <- read_xlsx("data-raw\\FSA - Clean up the names.xlsx",
+                                       sheet='crop name and type recode',
+                                       col_types='text') %>%
+  mutate(`Crop Code`=str_pad(`Crop Code`, 4, 'left', '0'))
+
+#### Recode Crop Names (again)
+crop_name_recode2 <- select(crop_name_and_type_recode,
+                            `Crop Code`, `Crop Name 2`) %>%
+  unique() %>%
+  filter(!is.na(`Crop Name 2`))
+
+fsa <- left_join(fsa, crop_name_recode2) %>%
+  mutate(`Crop Name`=if_else(is.na(`Crop Name 2`), `Crop Name`, `Crop Name 2`)) %>%
+  select(-`Crop Name 2`)
+one_to_one_fails(fsa, 'Crop Name', 'Crop Code')
+## from 22 to 16 rows.
+## actually, many are doubled because I combined tobacco and cotton crop types.
+
+## Call "turn area"s "idle" with type "turn area".
+filter(fsa, `Crop Code`=='0105') %>%
+  select(`Crop Name`, `Crop Type Name`) %>%
+  unique()
+fsa <- mutate(fsa, `Crop Type Name`=if_else(`Crop Name`=='TURN AREAS',
+                                            'TURN AREAS', `Crop Type Name`))
+fsa <- mutate(fsa, `Crop Name`=if_else(`Crop Code`=='0105',
+                                       'IDLE', `Crop Name`))
+#### Recode Crop Type Names (again)
+crop_type_name_recode2 <- select(crop_name_and_type_recode, -`Crop Name`, -`Crop Name 2`) %>%
+  unique() %>%
+  filter(!is.na(`Crop Type Name 2`))
+
+fsa <- left_join(fsa, crop_type_name_recode2) %>%
+  mutate(`Crop Type Name`=if_else(is.na(`Crop Type Name 2`),
+                                  `Crop Type Name`, `Crop Type Name 2`)) %>%
+  select(-`Crop Type Name 2`)
+
+# is.missing <- function(x) {is.null(x) | is.na(x)}
+#### If Crop Type Name is missing, so is Crop Type. So What good is Crop Type?
+# filter(fsa_, is.na(`Crop Type Name`) & !is.na(`Crop Type`))
+# filter(fsa_, is.null(`Crop Type Name`) & !is.null(`Crop Type`))
+# filter(fsa_, is.missing(`Crop Type Name`) & !is.missing(`Crop Type`))
+# unique(fsa_[c('Crop Name', 'Crop Type Name', 'Crop Type')]) %>%
+#   filter(!is.na(`Crop Type`) & `Crop Type` != 'NULL') %>%
+#   write.csv('Crop Type Review.csv')
+
+fsa <- select(fsa, -`Crop Type`, -`Crop Code`) %>%
+  rename(Crop='Crop Name', Variety='Crop Type Name')
+```
+
+
+## Code Missing Values as NA
+```{r}
+# fsa2 <- group_by(fsa, Year, State, County, Crop, Variety, `Irrigation Practice`,
+#                 `Intended Use`, Type) %>%
+#   summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+#   ungroup() 
+
+# filter(fsa, Variety %in% c('NULL', 'null', 'NA', 'na', '', ' '))
+## 75,205 rows.
+```
+
+```{r}
+convert_NAs <- function(x) {
+  if_else(x %in% c('NULL', 'null', 'NA', 'na', '', ' '),
+          NA_character_, x) }
+
+fsa <- mutate(fsa, Variety = convert_NAs(Variety))
+
+# filter(fsa, Crop %in% c('NULL', 'null', 'NA', 'na', '', ' ')) ## 0 rows
+# filter(fsa, is.na(Crop)) ## 0 rows
+# 
+# filter(fsa, `Irrigation Practice` %in% c('NULL', 'null', 'NA', 'na', '', ' ')) ## 0 rows
+# filter(fsa, is.na(`Irrigation Practice`)) ## 0 rows
+# 
+# filter(fsa, `Intended Use` %in% c('NULL', 'null', 'NA', 'na', '', ' ')) ## 0 rows
+# filter(fsa, is.na(`Intended Use`)) ## 313,237 rows
+# 
+# filter(fsa, Type %in% c('NULL', 'null', 'NA', 'na', '', ' ')) ## 0 rows
+# filter(fsa, is.na(Type)) ## 0 rows
+# 
+# filter(fsa, is.na(Acres)) ## 0 rows
+
+rm(county_name_recode, # crop_classification_review, crop_name_and_type_recode,
+   crop_name_recode, crop_type_name_recode)
+```
+The Variety column contains values such as "NULL", "null", "NA", and "na". Those values have been converted to missing values.
+
+
+## Review Intended Use Values
+```{r}
+# group_by(fsa, Year, `Intended Use`) %>%
+#   summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+#   spread(Year, Acres) %>% write.csv('Intended Use Review.csv')
+
+# filter(fsa, `Intended Use`=='LF') ## sesame leaves?
+
+intended_use_recode <- read_xlsx(
+  "FSA - Clean up the names.xlsx",
+  sheet = 'intended use recode 1')
+fsa <- recode_column_with_table(fsa, 4, intended_use_recode)
+
+fsa <- mutate(fsa, `Intended Use`= if_else(
+  is.na(as.numeric(`Intended Use`)),
+  `Intended Use`, paste0('CP', `Intended Use`)))
+
+# group_by(fsa, Year, `Intended Use`) %>%
+#   summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+#   spread(Year, Acres) %>% write.csv('Intended Use Review2.csv')
+
+intended_use_recode2 <- read_xlsx(
+  "FSA - Clean up the names.xlsx",
+  sheet = 'intended use recode 2')
+fsa <- recode_column_with_table(fsa, 4, intended_use_recode2)
+
+# group_by(fsa, Crop, `Intended Use`) %>%
+#   summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+#   spread(`Intended Use`, Acres) %>% View()
+```
+"Intended Use" from 2009 to 2012 included Conservation Practices. From 2009 - 2011 the conservation practices are designated by a number, and in 2012 they are listed in the form of "CP## Description". From 2013-2021, Conservation Practices appear in the 'Variety' Column.
+
+
+```{r}
+### All of those CP## entries in `Intended Use` have Crop=='CRP'
+filter(fsa, Crop != 'CRP')$`Intended Use` %>% unique()
+### Yea, pretty much.
+
+# filter(fsa, Crop=='CRP' | is.na(Crop))$Type %>% unique()
+
+filter(fsa, Crop=='CRP' | is.na(Crop)) %>%
+  group_by(Crop, Year, Variety, `Intended Use`) %>%
+  summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+  spread(Year, Acres) %>% View()
+
+fsa_crp <- filter(fsa, Crop=='CRP') %>%
+  mutate(Variety = if_else(is.na(Variety),
+                           `Intended Use`, Variety))
+
+group_by(fsa_crp, Crop, Year, Variety, `Intended Use`) %>%
+  summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
+  spread(Year, Acres) %>% write.csv('CRP Variety Review.csv')
+
+CRP_variety_recode <- read_xlsx(
+  "FSA - Clean up the names.xlsx",
+  sheet = 'CRP variety recode')
+
+fsa_crp <- recode_column_with_table(fsa_crp, 3, CRP_variety_recode)
+
+#### Some acronyms in the CRP varieties:
+### FWP	Farmable Wetland Program
+### MPL	Marginal Pasture Land
+### EFCRP	Emergency Forest Conservation Reserve Program
+### SAFE	State Acres for …
+### WL	Wildlife
+
+fsa_crp <- mutate(fsa_crp, `Intended Use` = NA_character_)
+select(fsa_crp, Variety, `Intended Use`) %>% unique() %>% View()
+
+fsa <- bind_rows(filter(fsa, Crop != 'CRP'), fsa_crp)
+
+rm(fsa_crp, CRP_variety_recode)
+
+rm(intended_use_recode, intended_use_recode2)
+
+acresFSA <- mutate(fsa,
+                   Year= as.integer(as.numeric(Year)),
+                   State=as.factor(State),
+                   County=as.factor(County),
+                   Type=as.factor(Type),
+                   `Irrigation Practice`=as.factor(`Irrigation Practice`),
+                   Crop=as.factor(Crop),
+                   Variety=Variety,
+                   `Intended Use`=as.factor(`Intended Use`),
+                   Acres=Acres) %>%
+  track_dataset("Convert some column types")
+
+acresFSA <- acresFSA %>%
+  select(Year, State, County, Type, `Irrigation Practice`, Crop, Variety, `Intended Use`,
+         Acres)
+
+usethis::use_data(acresFSA, overwrite=TRUE)
+write.csv(data_manipulation_log, 'data_cleaning_log.csv')
+```

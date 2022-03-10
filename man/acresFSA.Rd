@@ -3,9 +3,9 @@
 \docType{package}
 \name{acresFSA}
 \alias{acresFSA}
-\alias{acresFSA-package}
 \title{United States Farm Service Agency Acreage Data}
-\format{A data frame with nine variables:
+\format{
+A data frame with nine variables:
 \describe{
 \item{\code{Year}}{Year, 2009-2018}
 \item{\code{State}, \code{County}}{US State and county name}
@@ -17,7 +17,8 @@
 \item{\code{Acres}}{Amount of acres}
 }
 
-For further details, see \url{https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index}}
+For further details, see \url{https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index}
+}
 \usage{
 acresFSA
 }
