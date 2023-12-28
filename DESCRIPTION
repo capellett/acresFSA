@@ -1,7 +1,9 @@
 Package: acresFSA
 Title: United States Farm Service Agency Acreage Data
 Version: 0.0.0.9000
-Author: C A Pellett
+Authors@R:
+    person('C A', 'Pellett', email='c.alex.pellett@gmail.com',
+    role = c('aut', 'cre'))
 Description: The US Farm Service Agency has published annual acreage by county devoted to 
     a variety of agricultural and conservation land uses. The acresFSA package includes
     acreage data from 2009 to 2018 and functions to review that data.
