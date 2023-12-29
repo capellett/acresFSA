@@ -1,16 +1,19 @@
-#' @title Annual crop acreage by county and irrigation
-#' @description A table compiled from FSA reports from 2009 to 2021
-#' @format A \code{data.frame} with 9 variables
+#' acresFSA
+#'
+#' Acreage data from 2009-2018 by County, irrigation, and other factors.
+#'
+#' @format A data frame with nine variables:
 #' \describe{
-#' \item{Year}{}
-#' \item{State}{state name in all caps}
-#' \item{County}{county name in all caps}
-#' \item{Type}{}
-#' \item{Irrigation Practice}{}
-#' \item{Crop}{}
-#' \item{Variety}{}
-#' \item{Intended Use}{}
-#' \item{Acres}{}
+#' \item{\code{Year}}{Year, 2009-2018}
+#' \item{\code{State}, \code{County}}{US State and county names, all caps.}
+#' \item{\code{Type}}{Cultivation type: Failed, Not Planted, Planted, Prevented, or Volunteer}
+#' \item{\code{Irrigation Practice}}{Irrigated with typical means, other type of irrigation, and total (irrigated and non-irrigated)}
+#' \item{\code{Crop}}{Name of crop}
+#' \item{\code{Variety}}{Name of crop variety}
+#' \item{\code{Intended Use}}{Intended use of the crop}
+#' \item{\code{Acres}}{Amount of acres}
 #' }
+#'
+#' For further details, see \url{https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index}
+#'
 "acresFSA"
-
