@@ -17,3 +17,5 @@ Suggests:
     rmarkdown,
     testthat
 VignetteBuilder: knitr
+URL: https://github.com/capellett/acresFSA
+BugReports: https://github.com/capellett/acresFSA/issues
