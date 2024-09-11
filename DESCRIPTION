@@ -10,7 +10,7 @@ Description: The US Farm Service Agency has published annual acreage by
     uses. The acresFSA package includes acreage data from 2009 to 2018 and
     functions to review that data.
 License: file LICENSE
-URL: https://github.com/capellett/acresFSA
+URL: https://github.com/capellett/acresFSA, https://capellett.github.io/acresFSA/
 BugReports: https://github.com/capellett/acresFSA/issues
 Depends: 
     R (>= 3.5.1)

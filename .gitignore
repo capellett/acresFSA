@@ -4,3 +4,4 @@ inst/doc
 fsa.rds
 fsa_min
 data-raw/downloaded excel files/*
+docs
