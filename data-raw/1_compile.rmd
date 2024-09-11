@@ -11,14 +11,13 @@ always_allow_html: true
 ```{r echo=F, message=F, warning=F}
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
 library(tidyverse)
-library(magrittr)
 library(readxl)
 ```
 
 _"Farm Service Agency policy requires that producers participating in several programs submit an annual report regarding all cropland use on their farms. These programs include Agriculture Risk Coverage (ARC) and Price Loss Coverage (PLC). Reporting also applies to those who receive marketing assistance loans or loan deficiency payments. Failure to file an accurate and timely acreage report for all crops and land uses can result in loss of program benefits. Producers are required to self report all cropland on each farm to FSA annually. FSA uses these data to determine payment eligibility (land must be in an eligible agricultural use to qualify for payments) and to calculate losses for various disaster programs. Data are reported in the following categories: planted; prevented planted; and failed. In addition, the National Agricultural Statistics Service uses FSA planted acreage data to complement their survey data."_
 https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index
 
-This memorandum documents the compilation of the Farm Service Agency data in to an R package. The goal is to maintain the data integrity, enhance comparability of the data over time, and reduce file size and read speed. Additional data validation is documented in a subsequent memorandum, "
+This memorandum documents the compilation of the Farm Service Agency data in to an R package. The goal is to maintain the data integrity, enhance comparability of the data over time, and reduce file size and read speed. Additional data validation is documented in a subsequent memorandum.
 
 ```{r}
 ## Consider putting this function in the R folder, as part of the package.
@@ -47,18 +46,22 @@ track_dataset <- function(df, step_name=NA_character_,
 Irrigation practice information is not included in the FSA data for these years. Also, some fields were labelled inconsistently. Columns "Irrigation Practice" and "State County Code" are created here for forward compatibility. In these tables, it appears that there is a row for each intended use of each crop on each farm. There are then columns for the planted acres, prevented acres, and failed acres. The tables are pivoted so that there is a row for each _type_ (planted, prevented, and failed) of acreage for each intended use of each crop on each farm. Then, rows with acreage values of 0 are removed.
 
 ```{r echo=F}
+getwd()
+
+list.dirs()
+
 fsa0 <- bind_rows(
-  `2009`=read_xlsx('downloaded excel files\\2009_fsa_acres_detail_final_7.xlsx') %>%
-    rename(`State Abbrev`='State Name') %>% track_dataset('2009'),
-  `2010`=read_xlsx('downloaded excel files\\2010_fsa_acres_detail_final_5.xlsx') %>%
-    rename(`State Code`=State) %>% track_dataset('2010'),
-  .id='Year') %>% track_dataset('fsa0') %>%
+  `2009`=read_xlsx('downloaded excel files/2009_fsa_acres_detail_final_7.xlsx') |>
+    rename(`State Abbrev`='State Name') |> track_dataset('2009'),
+  `2010`=read_xlsx('downloaded excel files/2010_fsa_acres_detail_final_5.xlsx') |>
+    rename(`State Code`=State) |> track_dataset('2010'),
+  .id='Year') |> track_dataset('fsa0') |>
   mutate(`Irrigation Practice`='T',
-         `State County Code`= paste0(`State Code`, `County Code`)) %>%
-  gather('Type', 'Acres', `Planted Acres`:`Failed Acres`) %>%
-  mutate(Type = gsub("\\s*\\w*$", "", Type)) %>%
-  track_dataset('fsa0 tidy') %>%
-  filter(Acres != 0 & !is.na(Acres)) %>%
+         `State County Code`= paste0(`State Code`, `County Code`)) |>
+  gather('Type', 'Acres', `Planted Acres`:`Failed Acres`) |>
+  mutate(Type = gsub("\\s*\\w*$", "", Type)) |>
+  track_dataset('fsa0 tidy') |>
+  filter(Acres != 0 & !is.na(Acres)) |>
   track_dataset('fsa0 filter 0s') ## 310,076 obs of 14 variables. 35,177,520 bytes
 ```
 
@@ -68,15 +71,19 @@ The FSA acreage data for 2011 includes irrigation practice, but is formatted dif
 
 ```{r echo=F}
 ### I deleted some newlines in the column labels of 2011 by hand in excel.
-fsa11 <- read_xlsx('downloaded excel files\\2011_fsa_acres_detail_jan2012.xlsx') %>%
+fsa11 <- read_xlsx('downloaded excel files/2011_fsa_acres_detail_jan2012.xlsx') |>
   track_dataset('2011')
-
 ## 162,334 obs of 27 variables.
+
+
+## Clean up column names
+names(fsa11) <- gsub("\\s+", " ", names(fsa11))
+
 
 ## Test input data before making assumptions:
 ## Do the total columns all add up correctly?
 ## If so, then I can safely remove some redundant data.
-# fsa11b <- fsa11 %>% mutate(
+# fsa11b <- fsa11 |> mutate(
 #   PlantT=`Planted Irrigated` + `Planted Nonirrigated`,
 #   PreventT = `Prevented Irrigated` + `Prevented Nonirrigated`,
 #   FailT = `Failed Irrigated` + `Failed Nonirrigated`,
@@ -84,7 +91,7 @@ fsa11 <- read_xlsx('downloaded excel files\\2011_fsa_acres_detail_jan2012.xlsx')
 #   NPlantT = `Not Planted Irrigated` + `Not Planted Nonirrigated`,
 #   PandFT = `Plant and Fail Irrigated` + `Plant and Fail Nonirrigated`,
 #   PandFI = `Planted Irrigated` + `Failed Irrigated`,
-#   PandFN = `Planted Nonirrigated` + `Failed Nonirrigated`) %>%
+#   PandFN = `Planted Nonirrigated` + `Failed Nonirrigated`) |>
 #   mutate(
 #     PlantTotalTest = PlantT-`Planted Total`,
 #     PreventTotalTest = PreventT-`Prevented Total`,
@@ -96,7 +103,7 @@ fsa11 <- read_xlsx('downloaded excel files\\2011_fsa_acres_detail_jan2012.xlsx')
 #     PandFNonTest = PandFN-`Plant and Fail Nonirrigated`)
 #
 # summary(fsa11b[,36:43])
-# # filter(fsa11b, PlantedFailedTotalTest != 0) %>% View()
+# # filter(fsa11b, PlantedFailedTotalTest != 0) |> View()
 # all.equal(fsa11b$`Plant and Fail Total`, fsa11b$PandFT)
 # ## it checks out.
 # rm(fsa11b)
@@ -112,18 +119,18 @@ The _type_ columns are pivoted to rows, and the zero values are removed. The non
 fsa11b <- select(fsa11, # -`Crop Type`,
                 -`Planted Nonirrigated`, -`Prevented Nonirrigated`,-`Failed Nonirrigated`,
                 -`Volunteer Nonirrigated`, -`Not Planted Nonirrigated`,-`Plant and Fail Nonirrigated`,
-                -`Plant and Fail Total`, -`Plant and Fail Irrigated`) %>%
-  track_dataset('fsa11 remove nonirrigated') %>%
-  gather('Type', 'Acres', `Planted Total`:`Not Planted Irrigated`) %>%
-  track_dataset('fsa11 gather type') %>%
+                -`Plant and Fail Total`, -`Plant and Fail Irrigated`) |>
+  track_dataset('fsa11 remove nonirrigated') |>
+  gather('Type', 'Acres', `Planted Total`:`Not Planted Irrigated`) |>
+  track_dataset('fsa11 gather type') |>
   mutate(`Irrigation Practice` = if_else(Type %in% c(
     'Planted Irrigated', 'Prevented Irrigated', 'Failed Irrigated',
     'Volunteer Irrigated', 'Not Planted Irrigated'), 'I', 'T'),
     `State County Code`= paste0(`State Code`, `County Code`),
-    Year='2011') %>%
-  track_dataset('fsa11 add irrigated practice') %>%
-  mutate(Type = gsub("\\s*\\w*$", "", Type)) %>%
-  filter(Acres != 0 & !is.na(Acres)) %>%
+    Year='2011') |>
+  track_dataset('fsa11 add irrigated practice') |>
+  mutate(Type = gsub("\\s*\\w*$", "", Type)) |>
+  filter(Acres != 0 & !is.na(Acres)) |>
   track_dataset('fsa11 filter missing data')
 ## 232618 obs. of 14 variables.
 ```
@@ -135,16 +142,16 @@ There is some variation in the spelling or capitalization of the State names and
 ## variable spellings of states or abbreviations
 State_table <-
   full_join(
-    select(fsa11b, `State Code`, `State Name`) %>% unique(),
-    select(fsa0, `State Code`, `State Abbrev`) %>% unique()) %>%
+    select(fsa11b, `State Code`, `State Name`) |> unique(),
+    select(fsa0, `State Code`, `State Abbrev`) |> unique()) |>
   mutate(`State Name`=if_else(`State Abbrev`=='MP', 'MARIANA ISLANDS', `State Name`))
 
-fsa1 <- bind_rows(fsa0, fsa11b) %>%
-  select(-`State Name`, -`State Abbrev`) %>%
-  left_join(State_table) %>% track_dataset('fsa1')
+fsa1 <- bind_rows(fsa0, fsa11b) |>
+  select(-`State Name`, -`State Abbrev`) |>
+  left_join(State_table) |> track_dataset('fsa1')
 ## 542,694 obs. of 15 variables. 65,605,208 bytes
 
-# all.equal(fsa1[,c('State Code', 'State Name', 'State Abbrev')] %>% unique(),
+# all.equal(fsa1[,c('State Code', 'State Name', 'State Abbrev')] |> unique(),
 #           State_table) ## TRUE
 ## This checks out...
 
@@ -155,64 +162,78 @@ rm(fsa0, fsa11, fsa11b)
 The remaining files are more uniform.
 ```{r}
 read_fsa <- function(x) {
-  read_xlsx(x, sheet='county_data') %>%
-    select(-`Planted and Failed Acres`) %>%
+  read_xlsx(x, sheet='county_data') |>
+    select(-`Planted and Failed Acres`) |>
     filter(!is.na(County))}
 
 fsa2 <- bind_rows(
-  `2012`=read_fsa('downloaded excel files\\2012_fsa_acres_jan_2013.xlsx') %>%
-    rename(`Failed Acres`='Failded Acres') %>% track_dataset('2012'),
-  `2013`=read_fsa('downloaded excel files\\2013_fsa_acres_jan_2014.xlsx') %>% track_dataset('2013'),
-  `2014`=read_fsa('downloaded excel files\\2014_fsa_acres_jan2014.xlsx') %>% track_dataset('2014'),
-  `2015`=read_fsa('downloaded excel files\\2015_fsa_acres_01052016.xlsx') %>% track_dataset('2015'),
-  `2016`=read_fsa('downloaded excel files\\2016_fsa_acres_010417.xlsx') %>% track_dataset('2016'),
-  `2017`=read_fsa('downloaded excel files\\2017_fsa_acres_010418.xlsx') %>% track_dataset('2017'),
-  `2018`=read_fsa('downloaded excel files\\2018_fsa_acres_012819.xlsx') %>% track_dataset('2018'),
-  `2019`=read_fsa('downloaded excel files\\2019_fsa_acres_web_010220.xlsx') %>% track_dataset('2019'),
-  `2020`=read_fsa('downloaded excel files\\2020_fsa_acres_web_010521.xlsx') %>% track_dataset('2020'),
-  `2021`=read_fsa('downloaded excel files\\2021_fsa_acres_web_080221.xlsx') %>% track_dataset('2021'),
-  .id='Year')  %>% track_dataset('fsa2012-2021') ## 1,790,332 obs of 16 variables. 158,999,384 bytes
+  `2012`=read_fsa('downloaded excel files/2012_fsa_acres_jan_2013.xlsx') |>
+    rename(`Failed Acres`='Failded Acres') |> track_dataset('2012'),
+  `2013`=read_fsa('downloaded excel files/2013_fsa_acres_jan_2014.xlsx') |> track_dataset('2013'),
+  `2014`=read_fsa('downloaded excel files/2014_fsa_acres_jan2014.xlsx') |> track_dataset('2014'),
+  `2015`=read_fsa('downloaded excel files/2015_fsa_acres_01052016.xlsx') |> track_dataset('2015'),
+  `2016`=read_fsa('downloaded excel files/2016_fsa_acres_010417.xlsx') |> track_dataset('2016'),
+  `2017`=read_fsa('downloaded excel files/2017_fsa_acres_010418.xlsx') |> track_dataset('2017'),
+  `2018`=read_fsa('downloaded excel files/2018_fsa_acres_012819.xlsx') |> track_dataset('2018'),
+  `2019`=read_fsa('downloaded excel files/2019_fsa_acres_web_010220.xlsx') |> track_dataset('2019'),
+  `2020`=read_fsa('downloaded excel files/2020_fsa_acres_web_010521.xlsx') |> track_dataset('2020'),
+  `2021`=read_fsa('downloaded excel files/2021_fsa_acres_web_010322.xlsx') |> 
+    track_dataset('2021') |>
+    slice(-1) |>
+    mutate(`Planted Acres` = as.numeric(`Planted Acres`),
+           `Volunteer Acres` = as.numeric(`Volunteer Acres`),
+           `Failed Acres` = as.numeric(`Failed Acres`),
+           `Prevented Acres` = as.numeric(`Prevented Acres`),
+           `Not Planted Acres` = as.numeric(`Not Planted Acres`)),
+  `2022`=read_fsa('downloaded excel files/2022_fsa_acres_web_010323.xlsx') |> track_dataset('2022') |>
+    dplyr::mutate(`State County Code` = as.character(`State County Code`)),
+  `2023`=read_fsa('downloaded excel files/2023_fsa_acres_web_010224.xlsx') |> track_dataset('2023') |>
+    dplyr::mutate(`State County Code` = as.character(`State County Code`)),
+  .id='Year')  |> track_dataset('fsa2012-2023') ## 1,790,332 obs of 16 variables. 158,999,384 bytes
 ```
 
 ```{r}
 ## calculate Total acres, make tidy
-fsa2b <- fsa2 %>%
-  gather('Type', 'Acres', `Planted Acres`:`Not Planted Acres`) %>% ## 6,189,540 obs. of 13 variables. 644,259,288 bytes
-  track_dataset('fsa2 gather acreage types') %>%
+fsa2b <- fsa2 |>
+  gather('Type', 'Acres', `Planted Acres`:`Not Planted Acres`) |> ## 6,189,540 obs. of 13 variables. 644,259,288 bytes
+  track_dataset('fsa2 gather acreage types') |>
   group_by(`State Code`, County, `County Code`, `State County Code`, Year,
-                  `Crop`, `Crop Type`, `Crop Code`, `Intended Use`, `Irrigation Practice`, `Type`) %>%
-  summarise(Acres=sum(Acres, na.rm=TRUE)) %>%
-  ungroup() %>%
-  track_dataset('fsa2 sum acres by county, crop, use, irrigation, and type') %>%
-  spread(`Irrigation Practice`, Acres) %>%
+                  `Crop`, `Crop Type`, `Crop Code`, `Intended Use`, `Irrigation Practice`, `Type`) |>
+  summarise(Acres=sum(Acres, na.rm=TRUE)) |>
+  ungroup() |>
+  track_dataset('fsa2 sum acres by county, crop, use, irrigation, and type') |>
+  spread(`Irrigation Practice`, Acres) |>
   mutate(Type = gsub("\\s*\\w*$", "", Type),
          I= if_else(is.na(I), 0, I),
          N= if_else(is.na(N), 0, N),
-         O= if_else(is.na(O), 0, O)) %>%
-  mutate(`T`=I+N+O) %>% select(-N) %>%
-  track_dataset('fsa2 spread irrigation practice, calculate total, remove unirrigated') %>%
-  gather(`Irrigation Practice`, 'Acres', `I`:`T`) %>%
-  track_dataset('fsa2 gather irrigation practice') %>%
-  filter(Acres != 0 & !is.na(Acres)) %>% ## 1522162
-  track_dataset("fsa2 remove 0's and missing data") %>%
+         O= if_else(is.na(O), 0, O)) |>
+  mutate(`T`=I+N+O) |> select(-N) |>
+  track_dataset('fsa2 spread irrigation practice, calculate total, remove unirrigated') |>
+  gather(`Irrigation Practice`, 'Acres', `I`:`T`) |>
+  track_dataset('fsa2 gather irrigation practice') |>
+  filter(Acres != 0 & !is.na(Acres)) |> ## 1522162
+  track_dataset("fsa2 remove 0's and missing data") |>
   rename(`County Name`=County, `Crop Type Name`='Crop Type', `Crop Name`=Crop)
 
 State_table[55,] <- list("60","AMERICAN SAMOA", "AS")
-fsa2b <- inner_join(fsa2b, State_table) %>% track_dataset('fsa2 state join')
+fsa2b <- inner_join(fsa2b, State_table) |> track_dataset('fsa2 state join')
 ```
 The types of acreage values, such as Planted Acres, Failed Acres, etc., which are listed in separate columns in the raw tables, are separated in to distinct rows. Then the acreage values are summed for each year, county, crop, crop type, intended use, irrigation practice, and type. Prior to that operation, each row represented a specific (though unnamed) farm, now the rows represent the totals for the county. The rows for nonirrigated acreage are removed, because that information is implicit in the values for irrigated and total acreage. 
 
 
-
 ```{r}
-fsa <- bind_rows(fsa1, fsa2b) %>% track_dataset('fsa')
+fsa <- bind_rows(fsa1, fsa2b) |> track_dataset('fsa')
 saveRDS(fsa, 'acresFSA_compilation.rds')
 rm(fsa1, fsa2, fsa2b)
+```
 
+```{r}
 write.csv(data_manipulation_log, 'data_compilation_log.csv')
 
 ### TODO!!!: Read in farm counts
 # read_farm_count <- function(x) {read_xlsx(x, sheet='farm_count')}
 
 ```
+
+
 

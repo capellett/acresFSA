@@ -19,7 +19,9 @@ library(readxl)
 ```{r}
 fsa <- readRDS('acresFSA_compilation.rds')
 fsa <- mutate(fsa, `County Name` = toupper(`County Name`))
+```
 
+```{r}
 ### TODO: use these libraries.
 ### install.packages('validate', 'errorlocate); library(validate); library(errorlocate)
 
@@ -40,15 +42,31 @@ fsa %>%
   dplyr::arrange(1)
 
 ```
-I'm not sure why the state codes appear to skip some numbers (03, for example). But everything else seems correct.
+USA state codes skip some numbers (eg, 03).
 
 ## Test that the State County Code is truly the concatenation of state and county codes.
 ```{r}
-filter(fsa, `State County Code` != paste0(`State Code`, `County Code`)) %>%
-  nrow(.) == 0
+ test1 <- filter(fsa, `State County Code` != paste0(`State Code`, `County Code`)) %>%
+  dplyr::select(Year, `State Code`, `County Code`, `State County Code`, `State Name`, `County Name`) %>%
+  unique() 
 
-fsa <- dplyr::select(fsa, -`State Code`, -`State Abbrev`) %>%
+test1 %>%
+  dplyr::arrange(Year, `State Name`, `County Name`)
+
+unique(test1$`State Code`)
+
+unique(nchar(test1$`State County Code`))
+
+## for some years, the leading zeros in State County Code got dropped.
+
+```
+
+```{r}
+fsa <- fsa |>
+  dplyr::mutate(`State County Code` = paste0(`State Code`, `County Code`)) |>
+  dplyr::select(-`State Code`, -`State Abbrev`) %>%
   dplyr::rename(State = 'State Name')
+
 ```
 Since that appears to be correct, the columns for State Code and State Abbreviation are redundant and have been removed.
 
