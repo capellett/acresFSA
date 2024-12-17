@@ -1,15 +1,17 @@
 ---
-title: "Data Cleanup"
+title: "Data Cleaning Methods"
 author: C Alex Pellett
 date: '`r Sys.Date()`' 
 output: 
   rmarkdown::html_vignette:
     fig.caption: yes
 vignette: >
-  %\VignetteIndexEntry{Data Cleanup}
+  %\VignetteIndexEntry{Data Cleaning Methods}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+# Data Cleaning and Validation
 
 ```{r message=F, warning=F}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, eval=FALSE)
