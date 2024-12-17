@@ -8,8 +8,8 @@
 <title>United States Farm Service Agency Acreage Data • acresFSA</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="United States Farm Service Agency Acreage Data">
 <meta name="description" content="The US Farm Service Agency has published annual acreage by county devoted to a variety of agricultural and conservation land uses. The acresFSA package includes acreage data from 2009 to 2018 and functions to review that data.">
 <meta property="og:description" content="The US Farm Service Agency has published annual acreage by county devoted to a variety of agricultural and conservation land uses. The acresFSA package includes acreage data from 2009 to 2018 and functions to review that data.">
@@ -35,7 +35,9 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/acresfsa.html">acresFSA</a></li>
+<li><a class="dropdown-item" href="articles/1_compile.html">Compilation Methods</a></li>
+    <li><a class="dropdown-item" href="articles/2_clean.html">Data Cleaning Methods</a></li>
+    <li><a class="dropdown-item" href="articles/acresfsa.html">acresFSA</a></li>
   </ul>
 </li>
       </ul>
@@ -51,8 +53,32 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9">
-The US Farm Service Agency has published annual acreage by county devoted to a variety of agricultural and conservation land uses. The acresFSA package includes acreage data from 2009 to 2018 and functions to review that data.
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header"><h1 id="acresfsa">acresFSA<a class="anchor" aria-label="anchor" href="#acresfsa"></a>
+</h1></div>
+<!-- badges: start -->
+<!-- badges: end -->
+<p>The acresFSA R-package contains a selection of data downloaded from the United States Department of Agriculture (USDA) Farm Service Agency (FSA) website.</p>
+<blockquote>
+<p>“Farm Service Agency policy requires that producers participating in several programs submit an annual report regarding all cropland use on their farms. These programs include Agriculture Risk Coverage (ARC) and Price Loss Coverage (PLC). Reporting also applies to those who receive marketing assistance loans or loan deficiency payments. Failure to file an accurate and timely acreage report for all crops and land uses can result in loss of program benefits. Producers are required to self report all cropland on each farm to FSA annually. FSA uses these data to determine payment eligibility (land must be in an eligible agricultural use to qualify for payments) and to calculate losses for various disaster programs. Data are reported in the following categories: planted; prevented planted; and failed. In addition, the National Agricultural Statistics Service uses FSA planted acreage data to complement their survey data.”</p>
+</blockquote>
+<p><a href="https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index" class="external-link uri">https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index</a></p>
+</div>
+<div class="section level1">
+<h1 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h1>
+<p>The “Getting Started” article is intended to be accessible to the general public. It includes a download link and an interactive data exploration tool.</p>
+</div>
+<div class="section level1">
+<h1 id="for-r-users">For R Users<a class="anchor" aria-label="anchor" href="#for-r-users"></a>
+</h1>
+<p>The acresFSA R package exports a single data object, named <code>acresFSA</code>. The package also contains articles (AKA vignettes), plotting functions, and a few custom helper functions. The vignettes document the methods used to compile and clean up the data.</p>
+<p>You can install the development version of acresFSA from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"capellett/acresFSA"</span><span class="op">)</span></span></code></pre></div>
+</div>
+
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
@@ -96,7 +122,7 @@ The US Farm Service Agency has published annual acreage by county devoted to a v
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

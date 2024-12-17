@@ -1,6 +1,8 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://capellett.github.io/acresFSA/404.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/LICENSE-text.html</loc></url>
+<url><loc>https://capellett.github.io/acresFSA/articles/1_compile.html</loc></url>
+<url><loc>https://capellett.github.io/acresFSA/articles/2_clean.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/articles/acresfsa.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/articles/index.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/authors.html</loc></url>
@@ -13,5 +15,6 @@
 <url><loc>https://capellett.github.io/acresFSA/reference/not.null.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/reference/tabular.html</loc></url>
 <url><loc>https://capellett.github.io/acresFSA/reference/to_aoi.html</loc></url>
+<url><loc>https://capellett.github.io/acresFSA/reference/track_dataset.html</loc></url>
 </urlset>
 
