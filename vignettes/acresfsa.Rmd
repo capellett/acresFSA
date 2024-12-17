@@ -1,12 +1,12 @@
 ---
-title: "acresFSA"
+title: "acresfsa"
 author: "C A Pellett"
 date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
     fig.caption: yes
 vignette: >
-  %\VignetteIndexEntry{acresFSA}
+  %\VignetteIndexEntry{acresfsa}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -25,7 +25,7 @@ The acresFSA R-package contains a selection of data downloaded from the United S
 <https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index>
 
 # Getting Started
-The "Getting Started" article is intended to be accessible to the general public. It includes a download link and an interactive data exploration tool.
+The [Getting Started](https://capellett.github.io/acresFSA/articles/acresfsa.html) article is intended to be accessible to the general public. It includes a download link and an interactive data exploration tool.
 
 # For R Users
 The acresFSA R package exports a single data object, named `acresFSA`. The package also contains articles (AKA vignettes), plotting functions, and a few custom helper functions. The vignettes document the methods used to compile and clean up the data.

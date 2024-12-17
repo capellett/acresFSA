@@ -30,9 +30,10 @@ website.
 
 # Getting Started
 
-The “Getting Started” article is intended to be accessible to the
-general public. It includes a download link and an interactive data
-exploration tool.
+The [Getting
+Started](https://capellett.github.io/acresFSA/articles/acresfsa.html)
+article is intended to be accessible to the general public. It includes
+a download link and an interactive data exploration tool.
 
 # For R Users
 
