@@ -16,6 +16,9 @@ vignette: >
 ```{r echo=F, message=F, warning=F}
 knitr::opts_chunk$set(
   message=FALSE, warning=FALSE, eval=FALSE)
+```
+
+```{r}
 library(tidyverse)
 library(readxl)
 ```
