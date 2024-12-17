@@ -7,7 +7,7 @@
 \format{
 A data frame with nine variables:
 \describe{
-\item{\code{Year}}{Year, 2009-2018}
+\item{\code{Year}}{Year, 2009-2023}
 \item{\code{State}, \code{County}}{US State and county names, all caps.}
 \item{\code{Type}}{Cultivation type: Failed, Not Planted, Planted, Prevented, or Volunteer}
 \item{\code{Irrigation Practice}}{Irrigated with typical means, other type of irrigation, and total (irrigated and non-irrigated)}
@@ -26,6 +26,24 @@ acresFSA
 This package contains annual county level data from
     the United States Farm Service Agency.
 
-Acreage data from 2009-2018 by County, irrigation, and other factors.
+Acreage data from 2009-2023 by County, irrigation, and other factors.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/capellett/acresFSA}
+  \item \url{https://capellett.github.io/acresFSA/}
+  \item Report bugs at \url{https://github.com/capellett/acresFSA/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: C A Pellett \email{c.alex.pellett@gmail.com}
+
+Other contributors:
+\itemize{
+  \item State of South Carolina Department of Natural Resources [funder]
+}
+
 }
 \keyword{datasets}

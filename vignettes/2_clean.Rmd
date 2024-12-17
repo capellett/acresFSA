@@ -1,15 +1,18 @@
 ---
-title: "Validation of Acreage Data from the US Farm Service Agency"
+title: "Data Cleanup"
 author: C Alex Pellett
 date: '`r Sys.Date()`' 
 output: 
-  word_document:
-    number_sections: true
-always_allow_html: true
+  rmarkdown::html_vignette:
+    fig.caption: yes
+vignette: >
+  %\VignetteIndexEntry{Data Cleanup}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r echo=F, message=F, warning=F}
-knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+```{r message=F, warning=F}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, eval=FALSE)
 library(tidyverse)
 library(magrittr)
 library(readxl)
@@ -17,7 +20,7 @@ library(readxl)
 
 
 ```{r}
-fsa <- readRDS('acresFSA_compilation.rds')
+fsa <- readRDS('../data-raw/acresFSA_compilation.rds')
 fsa <- mutate(fsa, `County Name` = toupper(`County Name`))
 ```
 
@@ -26,13 +29,17 @@ fsa <- mutate(fsa, `County Name` = toupper(`County Name`))
 ### install.packages('validate', 'errorlocate); library(validate); library(errorlocate)
 
 ## Convert any values of 'NULL', 'null', 'NA', or 'na' to NA_character_
+
+## Test that all State Codes are 2 characters, and all County Codes are 3 characters.
 unique(nchar(fsa$`State Code`))==2
 unique(nchar(fsa$`County Code`)) == 3
 ```
+
 ## Test year values
 ```{r}
 unique(fsa$Year) %>% sort()
 ```
+Look right, afterall, I created those values in the previous script.
 
 ## Test State Code, State Name, and State Abbreviation values
 ```{r}
@@ -211,6 +218,8 @@ fsa <- dplyr::bind_rows(
 fsa <- dplyr::select(fsa, -`Crop Type`) %>%
   dplyr::rename(Crop='Crop Name', Variety='Crop Type Name')
 
+source("../R/track_dataset.R")
+
 track_dataset(fsa, 'Tested and removed redundant columns')
 ```
 The Crop Type column contains 3 letter abbreviations of the values in the Crop Type Name column. The Crop Type abbreviations can be repeated for different crops. For example Crop Type of "CAN" might refer to Canary Grass, Carnelian Grapes, Canna Lily Flowers, or several other crops. That seems reasonable, but there are some cases where a single Crop Type abbreviation value is used to refer to multiple Crop Type Name values for the same Crop. In those cases, the Crop Type Name with the most characters is selected, as it is probably the most descriptive. At that point, the Crop Type abbreviation is redundant, so the column is dropped. The" "Crop Type Name" column is renamed to "Variety".
@@ -327,7 +336,7 @@ The Variety column contains values such as "NULL", "null", "NA", and "na". Those
 # filter(fsa, `Intended Use`=='LF') ## sesame leaves?
 
 intended_use_recode <- read_xlsx(
-  "FSA - Clean up the names.xlsx",
+  "../data-raw/FSA - Clean up the names.xlsx",
   sheet = 'intended use recode 1')
 fsa <- recode_column_with_table(fsa, 4, intended_use_recode)
 
@@ -340,7 +349,7 @@ fsa <- mutate(fsa, `Intended Use`= if_else(
 #   spread(Year, Acres) %>% write.csv('Intended Use Review2.csv')
 
 intended_use_recode2 <- read_xlsx(
-  "FSA - Clean up the names.xlsx",
+  "../data-raw/FSA - Clean up the names.xlsx",
   sheet = 'intended use recode 2')
 fsa <- recode_column_with_table(fsa, 4, intended_use_recode2)
 

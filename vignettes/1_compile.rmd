@@ -1,45 +1,27 @@
 ---
 title: "Compilation of Acreage Data from the US Farm Service Agency"
-author: C Alex Pellett
-date: '`r Sys.Date()`' 
+author: "C A Pellett"
+date: "`r Sys.Date()`"
 output: 
-  word_document:
-    number_sections: true
-always_allow_html: true
+  rmarkdown::html_vignette:
+    fig.caption: yes
+vignette: >
+  %\VignetteIndexEntry{acresFSA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r echo=F, message=F, warning=F}
-knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(
+  message=FALSE, warning=FALSE, eval=FALSE)
 library(tidyverse)
 library(readxl)
 ```
 
-_"Farm Service Agency policy requires that producers participating in several programs submit an annual report regarding all cropland use on their farms. These programs include Agriculture Risk Coverage (ARC) and Price Loss Coverage (PLC). Reporting also applies to those who receive marketing assistance loans or loan deficiency payments. Failure to file an accurate and timely acreage report for all crops and land uses can result in loss of program benefits. Producers are required to self report all cropland on each farm to FSA annually. FSA uses these data to determine payment eligibility (land must be in an eligible agricultural use to qualify for payments) and to calculate losses for various disaster programs. Data are reported in the following categories: planted; prevented planted; and failed. In addition, the National Agricultural Statistics Service uses FSA planted acreage data to complement their survey data."_
-https://www.fsa.usda.gov/news-room/efoia/electronic-reading-room/frequently-requested-information/crop-acreage-data/index
-
-This memorandum documents the compilation of the Farm Service Agency data in to an R package. The goal is to maintain the data integrity, enhance comparability of the data over time, and reduce file size and read speed. Additional data validation is documented in a subsequent memorandum.
+This vignette documents the compilation of the Farm Service Agency data in to an R package. The goal is to maintain the data integrity, enhance comparability of the data over time, and reduce file size and read speed. Additional data validation and cleaning documented in the next vignette.
 
 ```{r}
-## Consider putting this function in the R folder, as part of the package.
-## or as part of another package if it is generally useful.
-## A function to track object.size, nrow, & ncol
-## Add runtime to log.
-## (color by col type? stripe width by col size?)
-track_dataset <- function(df, step_name=NA_character_,
-                          track_log='data_manipulation_log', step_inc=1 ) {
-  track_log_entry <- list(step_name=step_name, step_inc=step_inc,
-                          nrow=nrow(df), ncol=ncol(df), object.size=object.size(df)[1])
-  if (exists(track_log)) {
-    track_log_entry$.data <- get(track_log)
-    track_log1 <- do.call(add_row, track_log_entry)
-  } else {
-    track_log1 <- as.data.frame(track_log_entry, stringsAsFactors=FALSE)
-  }
-  assign(track_log, track_log1, globalenv())
-  print(step_name)
-  invisible(df)
-  #### Todo: Time each step
-}
+source("../R/track_dataset.R")
 ```
 
 ## The early years, 2009 and 2010
@@ -162,22 +144,23 @@ rm(fsa0, fsa11, fsa11b)
 The remaining files are more uniform.
 ```{r}
 read_fsa <- function(x) {
+  x <- paste0('../data-raw/downloaded excel files/', x)
   read_xlsx(x, sheet='county_data') |>
     select(-`Planted and Failed Acres`) |>
     filter(!is.na(County))}
 
 fsa2 <- bind_rows(
-  `2012`=read_fsa('downloaded excel files/2012_fsa_acres_jan_2013.xlsx') |>
+  `2012`=read_fsa('2012_fsa_acres_jan_2013.xlsx') |>
     rename(`Failed Acres`='Failded Acres') |> track_dataset('2012'),
-  `2013`=read_fsa('downloaded excel files/2013_fsa_acres_jan_2014.xlsx') |> track_dataset('2013'),
-  `2014`=read_fsa('downloaded excel files/2014_fsa_acres_jan2014.xlsx') |> track_dataset('2014'),
-  `2015`=read_fsa('downloaded excel files/2015_fsa_acres_01052016.xlsx') |> track_dataset('2015'),
-  `2016`=read_fsa('downloaded excel files/2016_fsa_acres_010417.xlsx') |> track_dataset('2016'),
-  `2017`=read_fsa('downloaded excel files/2017_fsa_acres_010418.xlsx') |> track_dataset('2017'),
-  `2018`=read_fsa('downloaded excel files/2018_fsa_acres_012819.xlsx') |> track_dataset('2018'),
-  `2019`=read_fsa('downloaded excel files/2019_fsa_acres_web_010220.xlsx') |> track_dataset('2019'),
-  `2020`=read_fsa('downloaded excel files/2020_fsa_acres_web_010521.xlsx') |> track_dataset('2020'),
-  `2021`=read_fsa('downloaded excel files/2021_fsa_acres_web_010322.xlsx') |> 
+  `2013`=read_fsa('2013_fsa_acres_jan_2014.xlsx') |> track_dataset('2013'),
+  `2014`=read_fsa('2014_fsa_acres_jan2014.xlsx') |> track_dataset('2014'),
+  `2015`=read_fsa('2015_fsa_acres_01052016.xlsx') |> track_dataset('2015'),
+  `2016`=read_fsa('2016_fsa_acres_010417.xlsx') |> track_dataset('2016'),
+  `2017`=read_fsa('2017_fsa_acres_010418.xlsx') |> track_dataset('2017'),
+  `2018`=read_fsa('2018_fsa_acres_012819.xlsx') |> track_dataset('2018'),
+  `2019`=read_fsa('2019_fsa_acres_web_010220.xlsx') |> track_dataset('2019'),
+  `2020`=read_fsa('2020_fsa_acres_web_010521.xlsx') |> track_dataset('2020'),
+  `2021`=read_fsa('2021_fsa_acres_web_010322.xlsx') |> 
     track_dataset('2021') |>
     slice(-1) |>
     mutate(`Planted Acres` = as.numeric(`Planted Acres`),
@@ -185,11 +168,13 @@ fsa2 <- bind_rows(
            `Failed Acres` = as.numeric(`Failed Acres`),
            `Prevented Acres` = as.numeric(`Prevented Acres`),
            `Not Planted Acres` = as.numeric(`Not Planted Acres`)),
-  `2022`=read_fsa('downloaded excel files/2022_fsa_acres_web_010323.xlsx') |> track_dataset('2022') |>
+  `2022`=read_fsa('2022_fsa_acres_web_010323.xlsx') |> track_dataset('2022') |>
     dplyr::mutate(`State County Code` = as.character(`State County Code`)),
-  `2023`=read_fsa('downloaded excel files/2023_fsa_acres_web_010224.xlsx') |> track_dataset('2023') |>
+  `2023`=read_fsa('2023_fsa_acres_web_010224.xlsx') |> track_dataset('2023') |>
     dplyr::mutate(`State County Code` = as.character(`State County Code`)),
-  .id='Year')  |> track_dataset('fsa2012-2023') ## 1,790,332 obs of 16 variables. 158,999,384 bytes
+  .id='Year')  |> 
+  track_dataset('fsa2012-2023') 
+## 1,790,332 obs of 16 variables. 158,999,384 bytes
 ```
 
 ```{r}
@@ -223,14 +208,14 @@ The types of acreage values, such as Planted Acres, Failed Acres, etc., which ar
 
 ```{r}
 fsa <- bind_rows(fsa1, fsa2b) |> track_dataset('fsa')
-saveRDS(fsa, 'acresFSA_compilation.rds')
+saveRDS(fsa, '../data-raw/acresFSA_compilation.rds')
 rm(fsa1, fsa2, fsa2b)
 ```
 
 ```{r}
-write.csv(data_manipulation_log, 'data_compilation_log.csv')
+write.csv(data_manipulation_log, '../data-raw/data_compilation_log.csv')
 
-### TODO!!!: Read in farm counts
+### TODO: Read in farm counts
 # read_farm_count <- function(x) {read_xlsx(x, sheet='farm_count')}
 
 ```

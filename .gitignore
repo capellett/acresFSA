@@ -5,3 +5,5 @@ fsa.rds
 fsa_min
 data-raw/downloaded excel files/*
 docs
+/doc/
+/Meta/

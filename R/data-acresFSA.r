@@ -1,10 +1,10 @@
 #' acresFSA
 #'
-#' Acreage data from 2009-2018 by County, irrigation, and other factors.
+#' Acreage data from 2009-2023 by County, irrigation, and other factors.
 #'
 #' @format A data frame with nine variables:
 #' \describe{
-#' \item{\code{Year}}{Year, 2009-2018}
+#' \item{\code{Year}}{Year, 2009-2023}
 #' \item{\code{State}, \code{County}}{US State and county names, all caps.}
 #' \item{\code{Type}}{Cultivation type: Failed, Not Planted, Planted, Prevented, or Volunteer}
 #' \item{\code{Irrigation Practice}}{Irrigated with typical means, other type of irrigation, and total (irrigated and non-irrigated)}
