@@ -6,3 +6,7 @@ navbar:
   structure:
     left:  [intro, reference, articles, tutorials, news]
     right: [search, github, lightswitch]
+  components:
+    intro:
+      text: Getting Started
+      href: articles/acresFSA.html
