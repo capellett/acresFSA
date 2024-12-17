@@ -12,8 +12,6 @@ acresFSA %>%
   geom_line() +
   facet_wrap("Crop", scales="free_y")
 
-
-
 acresFSA %>%
   filter(State == "SOUTH CAROLINA" &
            County %in% c('MARLBORO', 'WILLIAMSBURG', 'FLORENCE', 'DILLON',

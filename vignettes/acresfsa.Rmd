@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Introduction
+This page is intended to provide user-friendly interface to download and explore the annual crop acreage data collected by the USDA FSA. 
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
@@ -19,6 +19,16 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
+## Download Link
+
+
+## Plot by State or County
+
+
+## Map by Crop and Year
+
+
 
 
 
